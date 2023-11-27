@@ -238,7 +238,9 @@ function composeCollectionMessage(
     const symbol = ws.isNewlyAcquired
       ? ":tada:"
       : ws.isAcquired
-      ? ":candy:"
+      ? ws.word === "アイス"
+        ? ":icecream:"
+        : ":candy:"
       : ":question:";
     const display = ws.isAcquired ? ws.word : ws.word.replace(/./g, "－");
     return `${symbol}${display}`;
@@ -281,20 +283,20 @@ function pickWords(count: number): string[] {
   return [...Array(count)].map(pickWord);
 }
 
-const KATAKANA_VOICED_STARTABLE =
-  "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポヴ";
-
-const KATAKANA_STARTABLE =
-  "アイウエオカキクケコサシスセソタチツテトナニヌネノ" +
-  "ハヒフヘホマミムメモヤユヨラリルレロワ";
-
-const KATAKANA_VOICED =
-  "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポァィゥェォッャュョヴー";
-
-const KATAKANA =
-  "アイウエオカキクケコサシスセソタチツテトナニヌネノ" +
-  "ハヒフヘホマミムメモヤユヨラリルレロワン" +
-  "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポァィゥェォッャュョヴー";
+// const KATAKANA_VOICED_STARTABLE =
+//   "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポヴ";
+//
+// const KATAKANA_STARTABLE =
+//   "アイウエオカキクケコサシスセソタチツテトナニヌネノ" +
+//   "ハヒフヘホマミムメモヤユヨラリルレロワ";
+//
+// const KATAKANA_VOICED =
+//   "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポァィゥェォッャュョヴー";
+//
+// const KATAKANA =
+//   "アイウエオカキクケコサシスセソタチツテトナニヌネノ" +
+//   "ハヒフヘホマミムメモヤユヨラリルレロワン" +
+//   "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポァィゥェォッャュョヴー";
 
 let NTH_CHARS: string[] | null = null;
 function pickWord(): string {
