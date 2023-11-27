@@ -296,14 +296,19 @@ const KATAKANA =
   "ハヒフヘホマミムメモヤユヨラリルレロワン" +
   "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポァィゥェォッャュョヴー";
 
+let NTH_CHARS: string[] | null = null;
 function pickWord(): string {
   const pick = (s: string) => {
     return s[Math.floor(Math.random() * s.length)];
   };
 
-  const chars_startable =
-    KATAKANA_STARTABLE + KATAKANA_STARTABLE + KATAKANA_VOICED_STARTABLE;
-  const chars = KATAKANA + KATAKANA + KATAKANA_VOICED;
+  if (NTH_CHARS == null) {
+    const numChars = 3;
+    const targetWords = getTargetWords();
+    NTH_CHARS = [...Array(numChars)].map((_, i) =>
+      targetWords.map((w) => w[i]).join("")
+    );
+  }
 
-  return [pick(chars_startable), pick(chars), pick(chars)].join("");
+  return NTH_CHARS.map((chars) => pick(chars)).join("");
 }
