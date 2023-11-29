@@ -19,10 +19,13 @@ function onWorkspaceChanged() {
 const SHEET_HISTORY = getSheetByName("実行履歴");
 const COL_HISTORY_TIME = 1;
 const COL_HISTORY_USER_ID = 2;
-const COL_HISTORY_COMMAND = 3;
-const COL_HISTORY_COUNT = 4;
-const COL_HISTORY_RESULT = 5;
-const NUM_COL_HISTORY = 5;
+const COL_HISTORY_CHANNEL_ID = 3;
+const COL_HISTORY_USER_NAME = 4;
+const COL_HISTORY_CHANNEL_NAME = 5;
+const COL_HISTORY_COMMAND = 6;
+const COL_HISTORY_COUNT = 7;
+const COL_HISTORY_RESULT = 8;
+const NUM_COL_HISTORY = 8;
 
 const SHEET_COLLECTION = getSheetByName("コレクション");
 
@@ -30,6 +33,16 @@ const SLACK_INCOMING_WEBHOOK_URL =
   PropertiesService.getScriptProperties().getProperty(
     "SLACK_INCOMING_WEBHOOK_URL"
   )!;
+
+const SLACK_SINGLE_LOTTERY_WORKFLOW_URL =
+  PropertiesService.getScriptProperties().getProperty(
+    "SLACK_SINGLE_LOTTERY_WORKFLOW_URL"
+  )!;
+
+const SLACK_MULTIPLE_LOTTERY_WORKFLOW_URL =
+  PropertiesService.getScriptProperties().getProperty(
+    "SLACK_MULTIPLE_LOTTERY_WORKFLOW_URL"
+  );
 
 function getSheetByName(name: string): GoogleAppsScript.Spreadsheet.Sheet {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -66,13 +79,20 @@ function runLotteryFor(rowNumber: number) {
   const board = writeCollection(userId, words);
 
   // Slackに結果をポストする
-  let msg =
-    `↓ ${userId} *アイスチャレンジ* ↓\n` +
-    words.map((w) => `・${w}`).join("\n");
+  const wordsDisplay =
+    count === 1 ? words[0] : words.map((w) => `・${w}`).join("\n");
+  let msg = `${userId} *アイスチャレンジ*\n${wordsDisplay}`;
 
   if (board != null) {
     msg += "\n\n";
     msg += board;
+  } else {
+    const url =
+      count === 1
+        ? SLACK_SINGLE_LOTTERY_WORKFLOW_URL
+        : SLACK_MULTIPLE_LOTTERY_WORKFLOW_URL;
+    msg += "\n\n";
+    msg += `残念！ おごらないけど<${url}|回す>`;
   }
 
   postMessage(msg);
@@ -91,10 +111,12 @@ function showBoardFor(historyRowNumber: number) {
   const isWordNewlyAcquired = Array(targetWords.length).fill(false);
 
   // メッセージを構成
-  let msg = composeCollectionMessage(
+  let msg = `${userId}\n\n`;
+  msg += composeCollectionMessage(
     targetWords,
     isWordNewlyAcquired,
-    isWordAcquired
+    isWordAcquired,
+    false
   );
 
   postMessage(msg);
@@ -127,7 +149,8 @@ function writeCollection(userId: string, words: string[]): string | null {
   let msg = composeCollectionMessage(
     targetWords,
     isWordNewlyAcquired,
-    isWordAcquired
+    isWordAcquired,
+    true
   );
 
   return msg;
@@ -204,17 +227,20 @@ function checkIsWordNewlyAcquired(
 function composeCollectionMessage(
   targetWords: string[],
   isWordNewlyAcquired: boolean[],
-  isWordAcquired: boolean[]
+  isWordAcquired: boolean[],
+  showDescriptions: boolean
 ) {
   let msg = "";
 
-  // 新しいおやつを手に入れていたらお祝いする
-  if (isWordNewlyAcquired.some((b) => b)) {
-    msg = ":bell: *新しいおやつを手に入れました！* :bell:\n";
-    msg += "\n";
-  } else {
-    msg = ":information_source: *いままでに集めたおやつ*\n";
-    msg += "\n";
+  if (showDescriptions) {
+    // 新しいおやつを手に入れていたらお祝いする
+    if (isWordNewlyAcquired.some((b) => b)) {
+      msg = ":bell: *新しいおやつを手に入れました！* :bell:\n";
+      msg += "\n";
+    } else {
+      msg = ":information_source: *いままでに集めたおやつ*\n";
+      msg += "\n";
+    }
   }
 
   type WordState = {
@@ -254,16 +280,18 @@ function composeCollectionMessage(
   msg += entryChunks.map((r) => r.join("　")).join("\n") + "\n";
   msg += "\n";
 
-  // 現在のコレクションの個数も表示しておく
-  const numCollectedWords = wordStates.reduce(
-    (c, ws) => c + (ws.isAcquired ? 1 : 0),
-    0
-  );
-  const left = wordStates.length - numCollectedWords;
-  if (left > 0) {
-    msg += `あと${left}個！`;
-  } else {
-    msg += ":sunglasses:";
+  if (showDescriptions) {
+    // 現在のコレクションの個数も表示しておく
+    const numCollectedWords = wordStates.reduce(
+      (c, ws) => c + (ws.isAcquired ? 1 : 0),
+      0
+    );
+    const left = wordStates.length - numCollectedWords;
+    if (left > 0) {
+      msg += `あと${left}個！`;
+    } else {
+      msg += ":sunglasses:";
+    }
   }
 
   return msg;
