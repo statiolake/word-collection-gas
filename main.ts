@@ -34,6 +34,11 @@ const SLACK_INCOMING_WEBHOOK_URL =
     "SLACK_INCOMING_WEBHOOK_URL"
   )!;
 
+const SLACK_CELEBRATE_INCOMING_WEBHOOK_URL =
+  PropertiesService.getScriptProperties().getProperty(
+    "SLACK_CELEBRATE_INCOMING_WEBHOOK_URL"
+  )!;
+
 const SLACK_SINGLE_LOTTERY_WORKFLOW_URL =
   PropertiesService.getScriptProperties().getProperty(
     "SLACK_SINGLE_LOTTERY_WORKFLOW_URL"
@@ -95,7 +100,10 @@ function runLotteryFor(rowNumber: number) {
     msg += `残念！ おごらないけど<${url}|回す>`;
   }
 
-  postMessage(msg);
+  postMessage(SLACK_INCOMING_WEBHOOK_URL, msg);
+  if (board != null) {
+    postMessage(SLACK_CELEBRATE_INCOMING_WEBHOOK_URL, msg);
+  }
 }
 
 function showBoardFor(historyRowNumber: number) {
@@ -119,7 +127,7 @@ function showBoardFor(historyRowNumber: number) {
     false
   );
 
-  postMessage(msg);
+  postMessage(SLACK_INCOMING_WEBHOOK_URL, msg);
 }
 
 function writeResult(rowNumber: number, words: string[]) {
@@ -297,8 +305,8 @@ function composeCollectionMessage(
   return msg;
 }
 
-function postMessage(msg: string) {
-  UrlFetchApp.fetch(SLACK_INCOMING_WEBHOOK_URL, {
+function postMessage(url: string, msg: string) {
+  UrlFetchApp.fetch(url, {
     method: "post",
     contentType: "application/json",
     payload: JSON.stringify({
