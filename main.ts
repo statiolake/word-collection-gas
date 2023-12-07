@@ -101,9 +101,6 @@ function runLotteryFor(rowNumber: number) {
   }
 
   postMessage(SLACK_INCOMING_WEBHOOK_URL, msg);
-  if (board != null) {
-    postMessage(SLACK_CELEBRATE_INCOMING_WEBHOOK_URL, msg);
-  }
 }
 
 function showBoardFor(historyRowNumber: number) {
